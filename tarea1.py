@@ -1,58 +1,69 @@
 # -*- coding: utf-8 -*-
-import os
 import socket
 import json
 import argparse
 import numpy as np
 import time
-import subprocess
 import threading
+import subprocess
 
-# Recibe input del usuario
+
+class myThread (threading.Thread):
+    def __init__(self, threadID, name, direccion, puerto):
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.name = name
+        self.direccion = direccion
+        self.puerto = puerto
+    def run(self):
+        print ("Starting communication with: " + self.name)
+        threadLock.acquire()
+        connectto(self.name, self.direccion, self.puerto)
+        print ("Exiting communicaction with: " + self.name)
+        threadLock.release()
+
+    def runcomm(self):
+        #print ("Starting " + self.name)
+        threadLock.acquire()
+        getcommand(self.name)
+        #print ("Exiting " + self.name)
+        threadLock.release()
+
+def connectto(threadName, direccion, puerto):
+    return subprocess.call(["telnet", direccion, puerto])
+
+def getcommand(threadName):
+    return input("Comando: ")
+    #threadName.exit()
+    #print ("%s: %s" % (threadName, time.ctime(time.time())))
+
+threadLock = threading.Lock()
+threads = {}
+
+# Recibe input del usuario[{"nombre": "N1","direccion": "localhost","puerto": 8120}]
 option = input('Eliga uno de los siguientes formatos:\n1. Comando: nombre1 direccion1 puerto1 ... nombreN direcciónN puertoN \n2. JSON: [{"nombre": "N1","direccion": "localhost","puerto": 8086},...]\n')
 option = int(option)
+
 if (option == 1):
     # Esteban
     time.sleep(5)
-    #sleep(5)
+
 if (option == 2):
     jsoninput = input('Ingrese el JSON: ')
-    # Estilo JSON para server
     #[{"nombre": "N1","direccion": "localhost","puerto": 8100},{"nombre": "N2","direccion": "localhost","puerto": 8101}]
     #[{"nombre": "N1","direccion": "localhost","puerto": 8120}]
     x = json.loads(jsoninput)
-    servers = {}
     for i in range(0,len(x)):
         nombre =  x[i]['nombre']
         direccion = x[i]['direccion']
         puerto = str(x[i]['puerto'])
-        #serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        #args = ('./server/server', puerto)
-        #servers[nombre] = puerto
-        #subprocess.call(cmd)
-        args = ('telnet', direccion, puerto)
-         #= subprocess.Popen(args, stdout=subprocess.PIPE)
-        #t = threading.Thread(target=subprocess.Popen, args=(args,))#stdout=subprocess.PIPE,))
-        servers[nombre] = threading.Thread(target=subprocess.Popen, args=(args,))
-        #popen.wait()
-        #output = popen.stdout.read()
-        #print(popen.stdout)
-        #print (popen.socket(socket.AF_INET, socket.SOCK_STREAM))
-        #time.sleep(5)
-        # Setea el socket como Non-Blocking
-        #serversocket.setblocking(0)
-        # Creamos un socket visible para direccion en el puerto indicado
-        # Visible para el exterior en puerto X -> serversocket.bind((socket.gethostname(), X))
-        # Visible para ambos en puerto X       -> s.bind(('', X))
-        #serversocket.bind((direccion, puerto))
-        # Volvemos al socket un server socket de 5 conexiones
-        #serversocket.listen(5)
-        # TODO: condicion de nombres iguales
+        threads[nombre] = myThread(i+2, nombre, direccion, puerto)
 
 # Loop del server
 while True:
     # Obtenemos los mensajes de la conexion y la direccion
     #print(servers)
+    #cmd = threadc.runcomm()
     cmd = input("Comando: ")
     cmds = cmd.split()
     if (len(cmds) <= 1):
@@ -65,7 +76,7 @@ while True:
                 print("Hablar a todes")
             else:
                 for c in cmds[1:]:
-                    print(servers[nombre].start())
+                    print(threads[nombre].start())
                     #subprocess.Popen(('ls'), stdout=subprocess.PIPE)
                     #result = subprocess.run(['telnet','localhost',servers[c]], stdout=subprocess.PIPE)
                     #tcon = "telnet localhost " + servers[c]
