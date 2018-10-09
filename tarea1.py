@@ -1,56 +1,43 @@
 # -*- coding: utf-8 -*-
-import socket
 import json
-import argparse
-import numpy as np
 import time
 import threading
 import subprocess
 import telnetlib
 
-class myThread (threading.Thread):
-    def __init__(self, name, direccion="", puerto=""):
+minicial = 0
+
+class myThreadServer (threading.Thread):
+    def __init__(self, name, direccion, puerto):
         threading.Thread.__init__(self)
+        self.tn = telnetlib.Telnet(direccion, puerto)
         self.name = name
-        self.direccion = direccion
-        self.puerto = puerto
-        self.tn = 0
 
-    def connect(self,direccion,puerto):
-        print ("Starting communication with: " + self.name)
-        self.tn = telnetlib.Telnet(self.direccion, self.puerto)
-        #self.tn.timeout = 10
-        #self.tn.read_until(b"Comando: ")
-        #threadLock.acquire()
-        #i = self.tn.expect(PromptLogin)
-        #print (i)
-        #self.conn = subprocess.run(["telnet", direccion, puerto], stdout=subprocess.PIPE)
-        #print (self.conn.stdout.decode('utf-8'))
-        #threadLock.release()
+    def run(self):
+        self.initialmsg()
+        self.readmsg()
 
-    def sendls(self):
-        print ("Sending ls to: " + self.name)
-        #threadLock.acquire()
-        ## Escribe ls al thread
-        self.tn.write(b"ls")
-        #print ("Exiting " + self.name)
-        #threadLock.release()
-    def receivemsg(self):
-        ## Cuando este listo imprima
-        print("")
+    def initialmsg(self):
+        print (self.tn.read_until(b"'help'").decode('utf-8'))
+        print (self.tn.read_until(b"\n").decode('utf-8'))
+        print (self.tn.read_until(b"\n").decode('utf-8'))
 
-#def connectto(threadName, direccion, puerto):
-    #return subprocess.call(["telnet", direccion, puerto])
+    def readmsg(self):
+        while True:
+            print (self.tn.read_until(b"\n").decode('utf-8'))
+            time.sleep(2)
 
-def getcommand(threadName):
-    return input("Comando: ")
-    #threadName.exit()
-    #print ("%s: %s" % (threadName, time.ctime(time.time())))
+class myThreadCommand (threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
 
-threadLock = threading.Lock()
+    def send(self, t, c):
+        print ("Sending " + c + " to: " + t)
+        threads[t].tn.write(str.encode(c))
+
+
 threads = {}
-threadc = myThread("Comando")
-
+# N1 localhost 8120 N2 localhost 8121
 # Recibe input del usuario   [{"nombre": "N1","direccion": "localhost","puerto": 8120}]
 option = input('Eliga uno de los siguientes formatos:\n1. Comando: nombre1 direccion1 puerto1 ... nombreN direcciónN puertoN \n2. JSON: [{"nombre": "N1","direccion": "localhost","puerto": 8086},...]\n')
 option = int(option)
@@ -62,7 +49,8 @@ if (option == 1):
         nombre = str(lista_servidores[i])
         direccion = str(lista_servidores[i+1])
         puerto = str(lista_servidores[i+2])
-        threads[nombre] = myThread(nombre, direccion, puerto)
+        threads[nombre] = myThreadServer(nombre, direccion, puerto)
+
 if (option == 2):
     jsoninput = input('Ingrese el JSON: ')
     #[{"nombre": "N1","direccion": "localhost","puerto": 8100},{"nombre": "N2","direccion": "localhost","puerto": 8101}]
@@ -72,16 +60,17 @@ if (option == 2):
         nombre =  x[i]['nombre']
         direccion = x[i]['direccion']
         puerto = str(x[i]['puerto'])
-        threads[nombre] = myThread(nombre, direccion, puerto)
+        threads[nombre] = myThreadServer(nombre, direccion, puerto)
 
 for t in threads:
-    threads[t].connect()
-    #threads[t].join()
+    threads[t].start()
 
+threadc = myThreadCommand()
+time.sleep(0.5)
 # Loop del server
 while True:
     # Obtenemos los mensajes de la conexion y la direccion
-    
+    cmd = input("Comando: ")
     cmds = cmd.split()
     if (len(cmds) <= 1):
         print("Ingrese un comando válido")
@@ -89,37 +78,42 @@ while True:
         if (cmds[0] == "ls"):
             if (cmds[1] == "all"):
                 for t in threads:
-                    threads[t].sendls()
+                    threadc.send(t,"ls")
             else:
                 for c in cmds[1:]:
-                    threads[c].sendls()
+                    threadc.send(c,"ls")
+
         elif (cmds[0] == "echo"):
             if (cmds[1] == "all"):
                 for t in threads:
-                    threads[t].sendecho()
+                    threadc.send(t,"echo")
             else:
                 for c in cmds[1:]:
-                    threads[c].sendecho()
+                    threadc.send(c,"echo")
+
         elif (cmds[0] == "cat"):
             if (cmds[1] == "all"):
                 for t in threads:
-                    threads[t].sendcat()
+                    threadc.send(t,"cat")
             else:
                 for c in cmds[1:]:
-                    threads[c].sendcat()
+                    threadc.send(c,"cat")
+
         elif (cmds[0] == "help"):
             if (cmds[1] == "all"):
                 for t in threads:
-                    threads[t].sendhelp()
+                    threadc.send(t,"help")
             else:
                 for c in cmds[1:]:
-                    threads[c].sendhelp()
+                    threadc.send(c,"help")
+
         elif (cmds[0] == "exit"):
             if (cmds[1] == "all"):
                 for t in threads:
-                    threads[t].sendexit()
+                    threadc.send(t,"exit")
             else:
                 for c in cmds[1:]:
-                    threads[c].sendexit()
+                    threadc.send(c,"exit")
+
         else:
             print("Comando invalido, ingrese nuevamente")
