@@ -31,9 +31,13 @@ class myThreadCommand (threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
 
-    def send(self, t, c):
-        print ("Sending " + c + " to: " + t)
-        threads[t].tn.write(str.encode(c))
+    def send(self, t, c, arg=0):
+        if (not arg):
+            print ("Sending " + c + " to: " + t)
+            threads[t].tn.write(str.encode(c))
+        else:
+            print ("esteban")
+            threads[t].tn.write(str.encode(c+arg))
 
 
 threads = {}
