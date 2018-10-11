@@ -1,4 +1,5 @@
 Tarea 1 Redes: Cliente Multitelnet
+Integrantes: Esteban Estay - Benjamín Zamora
 
 Instrucciones:
 	- El programa está escrito en Python 3 por lo cual debe correr el comando: python3 tarea1.py

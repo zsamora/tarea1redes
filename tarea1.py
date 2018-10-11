@@ -83,44 +83,44 @@ class myThreadCommand (threading.Thread):
                 if (cmds[0] == "ls"):
                     if (cmds[1] == "all"):
                         for t in self.threads:
-                            threadc.send(t,"ls")
+                            self.send(t,"ls")
                     else:
                         for c in cmds[1:]:
-                            threadc.send(c,"ls")
+                            self.send(c,"ls")
                 # Comando exit
                 elif (cmds[0] == "exit"):
                     if (cmds[1] == "all"):
                         for t in self.threads:
-                            threadc.send(t,"exit")
+                            self.send(t,"exit")
                         self.threads = {}
                     else:
                         for c in cmds[1:]:
-                            threadc.send(c,"exit")
+                            self.send(c,"exit")
                             del self.threads[c]
                 # Comando help
                 elif (cmds[0] == "help"):
                     if (cmds[1] == "all"):
                         for t in self.threads:
-                            threadc.send(t,"help")
+                            self.send(t,"help")
                     else:
                         for c in cmds[1:]:
-                            threadc.send(c,"help")
+                            self.send(c,"help")
                 # Comando echo
                 elif (cmds[0] == "echo"):
                     if (cmds[2] == "all"):
                         for t in self.threads:
-                            threadc.send(t,"echo",cmds[1])
+                            self.send(t,"echo",cmds[1])
                     else:
                         for c in cmds[2:]:
-                            threadc.send(c,"echo",cmds[1])
+                            self.send(c,"echo",cmds[1])
                 # Comando cat
                 elif (cmds[0] == "cat"):
                     if (cmds[2] == "all"):
                         for t in self.threads:
-                            threadc.send(t,"cat",cmds[1])
+                            self.send(t,"cat",cmds[1])
                     else:
                         for c in cmds[2:]:
-                            threadc.send(c,"cat",cmds[1])
+                            self.send(c,"cat",cmds[1])
                 # Comando desconocido, se ignora
                 else:
                     print("Comando invalido, ingrese nuevamente")
